@@ -6,12 +6,6 @@ Aplikasi Android untuk mencari dan mendaftar event lari/marathon.
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material3-green)
 ![PHP](https://img.shields.io/badge/Backend-PHP-purple)
 
-## 📱 Screenshots
-
-| Splash Screen | Home | Event Detail |
-|:---:|:---:|:---:|
-| Orange gradient dengan icon runner | Daftar event & berita | Detail event dengan tombol daftar |
-
 ## ✨ Fitur
 
 ### Untuk User
@@ -36,74 +30,45 @@ Aplikasi Android untuk mencari dan mendaftar event lari/marathon.
 - **DI:** Hilt
 - **Networking:** Retrofit + OkHttp
 - **Image Loading:** Coil
-- **Navigation:** Navigation Compose
 
 ### Backend
 - **Language:** PHP
 - **Database:** MySQL
 - **Auth:** JWT
 
-## 📁 Struktur Project
+## � Setup (Localhost)
 
-```
-app/src/main/java/com/example/runrace_finalproject/
-├── data/
-│   ├── model/          # Data class (Event, User, News, etc.)
-│   ├── remote/         # API interfaces
-│   └── repository/     # Repository pattern
-├── di/                 # Dependency Injection
-├── navigation/         # Navigation setup
-├── ui/
-│   ├── admin/          # Admin screens
-│   ├── auth/           # Login, Register, Splash
-│   ├── components/     # Reusable components
-│   ├── event/          # Event list & detail
-│   ├── home/           # Home screen
-│   ├── myevent/        # My registered events
-│   ├── news/           # News screens
-│   └── profile/        # Profile screens
-├── utils/              # Constants, helpers
-└── viewmodel/          # ViewModels
-```
+### 1. Setup Backend (XAMPP)
 
-```
-backend/
-├── api/
-│   ├── endpoints/
-│   │   ├── auth.php      # Login, Register
-│   │   ├── events.php    # Event CRUD + registration
-│   │   ├── news.php      # News CRUD
-│   │   ├── users.php     # User profile
-│   │   └── uploads.php   # Image upload
-│   ├── index.php         # Router
-│   └── .htaccess
-├── uploads/              # Uploaded images
-├── config.php            # DB & JWT config
-├── jwt.php               # JWT helper
-└── database.sql          # Database schema
-```
-
-## 🚀 Setup
-
-### Backend
-1. Import `database.sql` ke MySQL
-2. Edit `config.php`:
+1. Install XAMPP
+2. Copy folder `backend/` ke `C:\xampp\htdocs\runrace\`
+3. Buka phpMyAdmin (`http://localhost/phpmyadmin`)
+4. Buat database baru: `runrace_db`
+5. Import `database.sql`
+6. Edit `config.php`:
    ```php
    define('DB_HOST', 'localhost');
    define('DB_NAME', 'runrace_db');
-   define('DB_USER', 'your_user');
-   define('DB_PASS', 'your_pass');
+   define('DB_USER', 'root');
+   define('DB_PASS', '');
    ```
-3. Upload folder `backend/` ke hosting
-4. Pastikan folder `uploads/` writable (chmod 755)
+7. Pastikan folder `uploads/` writable
+8. Test API: `http://localhost/runrace/api/events`
 
-### Android
-1. Edit `Constants.kt`:
+### 2. Setup Android
+
+1. Cari IP komputer Anda:
+   - Buka CMD, ketik `ipconfig`
+   - Catat IPv4 Address (contoh: `192.168.1.100`)
+
+2. Edit `app/src/main/java/.../utils/Constants.kt`:
    ```kotlin
-   const val BASE_URL = "https://your-domain.com/api/"
+   const val BASE_URL = "http://192.168.1.100/runrace/api/"
    ```
-2. Sync Gradle
-3. Run aplikasi
+   > ⚠️ **Ganti** `192.168.1.100` dengan IP komputer Anda
+
+3. Pastikan HP Android dan komputer di **WiFi yang sama**
+4. Sync Gradle & Run aplikasi
 
 ## 📋 API Endpoints
 
