@@ -3,6 +3,7 @@ package com.example.runrace_finalproject.di
 import com.example.runrace_finalproject.data.remote.AuthApi
 import com.example.runrace_finalproject.data.remote.EventApi
 import com.example.runrace_finalproject.data.remote.NewsApi
+import com.example.runrace_finalproject.data.remote.UploadApi
 import com.example.runrace_finalproject.data.remote.UserApi
 import com.example.runrace_finalproject.utils.AuthInterceptor
 import com.example.runrace_finalproject.utils.Constants
@@ -76,5 +77,11 @@ object NetworkModule {
     @Singleton
     fun provideUserApi(retrofit: Retrofit): UserApi {
         return retrofit.create(UserApi::class.java)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideUploadApi(retrofit: Retrofit): UploadApi {
+        return retrofit.create(UploadApi::class.java)
     }
 }

@@ -4,6 +4,7 @@ object Constants {
     // TODO: Update this with your actual backend API URL
     // For Android Emulator: use 10.0.2.2 to access localhost
     // For Physical Device: use your computer's IP address
+
     const val BASE_URL = "http://10.0.2.2/backend/api/"
     
     // SharedPreferences keys

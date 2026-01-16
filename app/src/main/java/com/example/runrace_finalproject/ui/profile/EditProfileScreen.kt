@@ -1,11 +1,18 @@
 package com.example.runrace_finalproject.ui.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,16 +31,45 @@ fun EditProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val uploadState by viewModel.uploadState.collectAsState()
     
     var name by remember { mutableStateOf(state.user?.name ?: "") }
     var photoUrl by remember { mutableStateOf(state.user?.photoUrl ?: "") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            selectedImageUri = it
+            viewModel.uploadImage(it)
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        viewModel.resetUploadState()
+    }
     
     LaunchedEffect(state.user) {
         state.user?.let {
             name = it.name
             photoUrl = it.photoUrl ?: ""
+        }
+    }
+    
+    // Update photoUrl when upload completes
+    LaunchedEffect(uploadState.uploadedUrl) {
+        uploadState.uploadedUrl?.let { url ->
+            photoUrl = url
+        }
+    }
+    
+    LaunchedEffect(uploadState.error) {
+        uploadState.error?.let { error ->
+            snackbarHostState.showSnackbar("Upload gagal: $error")
         }
     }
     
@@ -80,17 +116,66 @@ fun EditProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Profile Picture Preview
-            AsyncImage(
-                model = photoUrl.ifBlank { "https://via.placeholder.com/120" },
-                contentDescription = "Profile Picture",
+            // Profile Picture with upload option
+            Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+                    .size(140.dp)
+                    .clickable { imagePickerLauncher.launch("image/*") },
+                contentAlignment = Alignment.Center
+            ) {
+                if (uploadState.isUploading) {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    AsyncImage(
+                        model = photoUrl.ifBlank { "https://via.placeholder.com/120" },
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = 3.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape
+                            ),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                
+                // Camera icon overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Change Photo",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Klik untuk ubah foto",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Name Field
             OutlinedTextField(
@@ -103,14 +188,14 @@ fun EditProfileScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Photo URL Field
+            // Photo URL Field (optional manual input)
             OutlinedTextField(
                 value = photoUrl,
                 onValueChange = { photoUrl = it },
-                label = { Text("URL Foto Profil") },
+                label = { Text("URL Foto Profil (Opsional)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("https://example.com/photo.jpg") }
+                placeholder = { Text("Atau masukkan URL manual") }
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -123,7 +208,7 @@ fun EditProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = !state.isLoading && name.isNotBlank()
+                enabled = !state.isLoading && !uploadState.isUploading && name.isNotBlank()
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(

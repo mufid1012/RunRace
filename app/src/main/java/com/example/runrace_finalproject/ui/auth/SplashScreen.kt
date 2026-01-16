@@ -3,11 +3,15 @@ package com.example.runrace_finalproject.ui.auth
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,19 +28,20 @@ fun SplashScreen(
 ) {
     val state by viewModel.state.collectAsState()
     
+    // Animation for icon scale
     val infiniteTransition = rememberInfiniteTransition(label = "splash")
     val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
+        initialValue = 1f,
+        targetValue = 1.1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000),
+            animation = tween(800, easing = EaseInOutCubic),
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"
     )
     
     LaunchedEffect(Unit) {
-        delay(2000)
+        delay(2500)
         viewModel.checkLoginStatus()
     }
     
@@ -53,38 +58,69 @@ fun SplashScreen(
         }
     }
     
+    // Orange gradient background like Instagram/TikTok style
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary),
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFFF6B35), // Bright orange
+                        Color(0xFFFF8C42), // Medium orange
+                        Color(0xFFFFA556)  // Light orange
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "🏃",
-                fontSize = 80.sp,
-                modifier = Modifier.scale(scale)
+            // Running icon with animation
+            Icon(
+                imageVector = Icons.Default.DirectionsRun,
+                contentDescription = "Running",
+                modifier = Modifier
+                    .size(120.dp)
+                    .scale(scale),
+                tint = Color.White
             )
+            
             Spacer(modifier = Modifier.height(24.dp))
+            
+            // App Name
             Text(
                 text = "RunRace",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+                letterSpacing = 2.sp
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Event Lari Terbaik",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-            )
-            Spacer(modifier = Modifier.height(48.dp))
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(32.dp)
-            )
+        }
+        
+        // Footer credit at bottom
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 48.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "from",
+                    fontSize = 12.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = "mufid1012",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
         }
     }
 }

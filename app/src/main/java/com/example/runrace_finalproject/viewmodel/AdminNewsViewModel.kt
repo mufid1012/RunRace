@@ -1,10 +1,12 @@
 package com.example.runrace_finalproject.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.runrace_finalproject.data.model.News
 import com.example.runrace_finalproject.data.model.NewsRequest
 import com.example.runrace_finalproject.data.repository.NewsRepository
+import com.example.runrace_finalproject.data.repository.UploadRepository
 import com.example.runrace_finalproject.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +29,16 @@ data class AddEditNewsState(
     val error: String? = null
 )
 
+data class NewsUploadState(
+    val isUploading: Boolean = false,
+    val uploadedUrl: String? = null,
+    val error: String? = null
+)
+
 @HiltViewModel
 class AdminNewsViewModel @Inject constructor(
-    private val newsRepository: NewsRepository
+    private val newsRepository: NewsRepository,
+    private val uploadRepository: UploadRepository
 ) : ViewModel() {
     
     private val _listState = MutableStateFlow(AdminNewsState())
@@ -38,8 +47,39 @@ class AdminNewsViewModel @Inject constructor(
     private val _editState = MutableStateFlow(AddEditNewsState())
     val editState: StateFlow<AddEditNewsState> = _editState.asStateFlow()
     
+    private val _uploadState = MutableStateFlow(NewsUploadState())
+    val uploadState: StateFlow<NewsUploadState> = _uploadState.asStateFlow()
+    
     init {
         loadAllNews()
+    }
+    
+    fun uploadImage(uri: Uri) {
+        viewModelScope.launch {
+            _uploadState.value = NewsUploadState(isUploading = true)
+            
+            when (val result = uploadRepository.uploadImage(uri)) {
+                is Resource.Success -> {
+                    _uploadState.value = NewsUploadState(
+                        isUploading = false,
+                        uploadedUrl = result.data
+                    )
+                }
+                is Resource.Error -> {
+                    _uploadState.value = NewsUploadState(
+                        isUploading = false,
+                        error = result.message
+                    )
+                }
+                is Resource.Loading -> {
+                    _uploadState.value = NewsUploadState(isUploading = true)
+                }
+            }
+        }
+    }
+    
+    fun resetUploadState() {
+        _uploadState.value = NewsUploadState()
     }
     
     fun loadAllNews() {

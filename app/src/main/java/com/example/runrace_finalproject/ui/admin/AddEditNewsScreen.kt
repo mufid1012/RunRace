@@ -1,16 +1,28 @@
 package com.example.runrace_finalproject.ui.admin
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.runrace_finalproject.ui.components.LoadingIndicator
 import com.example.runrace_finalproject.viewmodel.AdminNewsViewModel
 
@@ -22,6 +34,7 @@ fun AddEditNewsScreen(
     viewModel: AdminNewsViewModel = hiltViewModel()
 ) {
     val editState by viewModel.editState.collectAsState()
+    val uploadState by viewModel.uploadState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     
     val isEditMode = newsId != null && newsId > 0
@@ -29,6 +42,17 @@ fun AddEditNewsScreen(
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            selectedImageUri = it
+            viewModel.uploadImage(it)
+        }
+    }
     
     LaunchedEffect(newsId) {
         if (isEditMode) {
@@ -36,6 +60,7 @@ fun AddEditNewsScreen(
         } else {
             viewModel.resetEditState()
         }
+        viewModel.resetUploadState()
     }
     
     LaunchedEffect(editState.news) {
@@ -43,6 +68,19 @@ fun AddEditNewsScreen(
             title = news.title
             content = news.content
             imageUrl = news.imageUrl ?: ""
+        }
+    }
+    
+    // Update imageUrl when upload completes
+    LaunchedEffect(uploadState.uploadedUrl) {
+        uploadState.uploadedUrl?.let { url ->
+            imageUrl = url
+        }
+    }
+    
+    LaunchedEffect(uploadState.error) {
+        uploadState.error?.let { error ->
+            snackbarHostState.showSnackbar("Upload gagal: $error")
         }
     }
     
@@ -97,6 +135,78 @@ fun AddEditNewsScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                // Image Picker Section
+                Text(
+                    text = "Gambar Berita",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (uploadState.isUploading) {
+                        CircularProgressIndicator()
+                    } else if (imageUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "News Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else if (selectedImageUri != null) {
+                        AsyncImage(
+                            model = selectedImageUri,
+                            contentDescription = "Selected Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddPhotoAlternate,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Klik untuk pilih gambar",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Optional: Manual URL input
+                OutlinedTextField(
+                    value = imageUrl,
+                    onValueChange = { imageUrl = it },
+                    label = { Text("Atau masukkan URL Gambar") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -117,16 +227,6 @@ fun AddEditNewsScreen(
                     maxLines = 10
                 )
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedTextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    label = { Text("URL Gambar (Opsional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Button(
@@ -140,7 +240,10 @@ fun AddEditNewsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !editState.isLoading && title.isNotBlank() && content.isNotBlank()
+                    enabled = !editState.isLoading && 
+                             !uploadState.isUploading && 
+                             title.isNotBlank() && 
+                             content.isNotBlank()
                 ) {
                     if (editState.isLoading) {
                         CircularProgressIndicator(

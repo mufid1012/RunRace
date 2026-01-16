@@ -2,6 +2,7 @@ package com.example.runrace_finalproject.data.remote
 
 import com.example.runrace_finalproject.data.model.ApiResponse
 import com.example.runrace_finalproject.data.model.Event
+import com.example.runrace_finalproject.data.model.EventParticipantsResponse
 import com.example.runrace_finalproject.data.model.EventRequest
 import com.example.runrace_finalproject.data.model.Registration
 import retrofit2.Response
@@ -38,4 +39,7 @@ interface EventApi {
     
     @GET("registrations/my")
     suspend fun getMyRegistrations(): Response<ApiResponse<List<Registration>>>
+    
+    @GET("events/{id}/participants")
+    suspend fun getEventParticipants(@Path("id") eventId: Int): Response<ApiResponse<EventParticipantsResponse>>
 }

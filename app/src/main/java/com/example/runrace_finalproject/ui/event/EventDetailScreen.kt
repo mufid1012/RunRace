@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,6 +21,9 @@ import com.example.runrace_finalproject.ui.components.ErrorMessage
 import com.example.runrace_finalproject.ui.components.LoadingIndicator
 import com.example.runrace_finalproject.utils.Constants
 import com.example.runrace_finalproject.viewmodel.EventViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +92,25 @@ fun EventDetailScreen(
             state.event != null -> {
                 val event = state.event!!
                 
+                // Calculate days until event and registration status
+                val daysUntilEvent = try {
+                    val eventDate = LocalDate.parse(event.date, DateTimeFormatter.ISO_LOCAL_DATE)
+                    val today = LocalDate.now()
+                    ChronoUnit.DAYS.between(today, eventDate)
+                } catch (e: Exception) {
+                    -1L // Error parsing date
+                }
+                
+                val canRegister = daysUntilEvent > 7
+                val isEventPast = daysUntilEvent < 0
+                
+                // Determine actual status based on date
+                val actualStatus = when {
+                    isEventPast -> "completed"
+                    daysUntilEvent <= 7 -> "ongoing"
+                    else -> "upcoming"
+                }
+                
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -108,14 +131,14 @@ fun EventDetailScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         // Status Badge
-                        val statusColor = when (event.status) {
-                            Constants.STATUS_ONGOING -> MaterialTheme.colorScheme.primary
-                            Constants.STATUS_UPCOMING -> MaterialTheme.colorScheme.secondary
+                        val statusColor = when (actualStatus) {
+                            "ongoing" -> Color(0xFFFF9800) // Orange for H-7
+                            "upcoming" -> Color(0xFF4CAF50) // Green for open registration
                             else -> MaterialTheme.colorScheme.tertiary
                         }
-                        val statusText = when (event.status) {
-                            Constants.STATUS_ONGOING -> "Berlangsung"
-                            Constants.STATUS_UPCOMING -> "Akan Datang"
+                        val statusText = when (actualStatus) {
+                            "ongoing" -> "Pendaftaran Ditutup"
+                            "upcoming" -> "Pendaftaran Dibuka"
                             else -> "Selesai"
                         }
                         
@@ -149,6 +172,16 @@ fun EventDetailScreen(
                                     )
                                 }
                             }
+                        }
+                        
+                        // Days until event info
+                        if (daysUntilEvent > 0) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (daysUntilEvent == 1L) "Besok!" else "H-$daysUntilEvent",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (daysUntilEvent <= 7) Color(0xFFFF5722) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         
                         Spacer(modifier = Modifier.height(16.dp))
@@ -246,9 +279,25 @@ fun EventDetailScreen(
                         Spacer(modifier = Modifier.height(32.dp))
                         
                         // Action Buttons
-                        if (event.status != Constants.STATUS_COMPLETED) {
-                            if (state.isRegistered) {
-                                // Cancel Registration Button
+                        when {
+                            isEventPast -> {
+                                // Event sudah lewat
+                                OutlinedButton(
+                                    onClick = { },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    enabled = false,
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(
+                                        "Event Telah Selesai",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                            }
+                            state.isRegistered -> {
+                                // Sudah terdaftar - bisa batalkan
                                 OutlinedButton(
                                     onClick = { viewModel.unregisterFromEvent(event.id) },
                                     modifier = Modifier
@@ -278,8 +327,9 @@ fun EventDetailScreen(
                                         )
                                     }
                                 }
-                            } else {
-                                // Register Button
+                            }
+                            canRegister -> {
+                                // Bisa daftar (lebih dari 7 hari)
                                 Button(
                                     onClick = { viewModel.registerForEvent(event.id) },
                                     modifier = Modifier
@@ -307,19 +357,27 @@ fun EventDetailScreen(
                                     }
                                 }
                             }
-                        } else {
-                            OutlinedButton(
-                                onClick = { },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                enabled = false,
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    "Event Telah Selesai",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                            else -> {
+                                // H-7 atau kurang - pendaftaran ditutup
+                                OutlinedButton(
+                                    onClick = { },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    enabled = false,
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Pendaftaran Ditutup (H-7)",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
                             }
                         }
                     }

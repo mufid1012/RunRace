@@ -1,10 +1,12 @@
 package com.example.runrace_finalproject.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.runrace_finalproject.data.model.Event
 import com.example.runrace_finalproject.data.model.EventRequest
 import com.example.runrace_finalproject.data.repository.EventRepository
+import com.example.runrace_finalproject.data.repository.UploadRepository
 import com.example.runrace_finalproject.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +29,16 @@ data class AdminEventFormState(
     val error: String? = null
 )
 
+data class UploadState(
+    val isUploading: Boolean = false,
+    val uploadedUrl: String? = null,
+    val error: String? = null
+)
+
 @HiltViewModel
 class AdminViewModel @Inject constructor(
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    private val uploadRepository: UploadRepository
 ) : ViewModel() {
     
     private val _listState = MutableStateFlow(AdminEventState())
@@ -38,8 +47,39 @@ class AdminViewModel @Inject constructor(
     private val _formState = MutableStateFlow(AdminEventFormState())
     val formState: StateFlow<AdminEventFormState> = _formState.asStateFlow()
     
+    private val _uploadState = MutableStateFlow(UploadState())
+    val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
+    
     init {
         loadAllEvents()
+    }
+    
+    fun uploadImage(uri: Uri) {
+        viewModelScope.launch {
+            _uploadState.value = UploadState(isUploading = true)
+            
+            when (val result = uploadRepository.uploadImage(uri)) {
+                is Resource.Success -> {
+                    _uploadState.value = UploadState(
+                        isUploading = false,
+                        uploadedUrl = result.data
+                    )
+                }
+                is Resource.Error -> {
+                    _uploadState.value = UploadState(
+                        isUploading = false,
+                        error = result.message
+                    )
+                }
+                is Resource.Loading -> {
+                    _uploadState.value = UploadState(isUploading = true)
+                }
+            }
+        }
+    }
+    
+    fun resetUploadState() {
+        _uploadState.value = UploadState()
     }
     
     fun loadAllEvents() {

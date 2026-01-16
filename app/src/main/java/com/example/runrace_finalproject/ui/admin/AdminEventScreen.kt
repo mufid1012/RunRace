@@ -1,5 +1,6 @@
 package com.example.runrace_finalproject.ui.admin
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,6 +31,7 @@ fun AdminEventScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAdd: () -> Unit,
     onNavigateToEdit: (Int) -> Unit,
+    onNavigateToParticipants: (Int) -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
     val state by viewModel.listState.collectAsState()
@@ -149,6 +151,7 @@ fun AdminEventScreen(
                     items(state.events) { event ->
                         AdminEventCard(
                             event = event,
+                            onClick = { onNavigateToParticipants(event.id) },
                             onEdit = { onNavigateToEdit(event.id) },
                             onDelete = { eventToDelete = event }
                         )
@@ -162,11 +165,14 @@ fun AdminEventScreen(
 @Composable
 fun AdminEventCard(
     event: Event,
+    onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -229,6 +235,25 @@ fun AdminEventCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Registration count
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.People,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "${event.registrationCount} peserta terdaftar",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
             
             // Actions

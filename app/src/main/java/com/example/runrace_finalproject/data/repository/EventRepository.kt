@@ -1,6 +1,7 @@
 package com.example.runrace_finalproject.data.repository
 
 import com.example.runrace_finalproject.data.model.Event
+import com.example.runrace_finalproject.data.model.EventParticipantsResponse
 import com.example.runrace_finalproject.data.model.EventRequest
 import com.example.runrace_finalproject.data.model.Registration
 import com.example.runrace_finalproject.data.remote.EventApi
@@ -169,6 +170,24 @@ class EventRepository @Inject constructor(
                 }
             } else {
                 Resource.Error(response.message() ?: "Failed to unregister from event")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "An error occurred")
+        }
+    }
+    
+    suspend fun getEventParticipants(eventId: Int): Resource<EventParticipantsResponse> {
+        return try {
+            val response = eventApi.getEventParticipants(eventId)
+            if (response.isSuccessful && response.body() != null) {
+                val apiResponse = response.body()!!
+                if (apiResponse.success && apiResponse.data != null) {
+                    Resource.Success(apiResponse.data)
+                } else {
+                    Resource.Error(apiResponse.message)
+                }
+            } else {
+                Resource.Error(response.message() ?: "Failed to get participants")
             }
         } catch (e: Exception) {
             Resource.Error(e.message ?: "An error occurred")

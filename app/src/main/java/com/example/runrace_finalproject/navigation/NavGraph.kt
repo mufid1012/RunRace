@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.example.runrace_finalproject.ui.admin.AddEditEventScreen
 import com.example.runrace_finalproject.ui.admin.AdminDashboardScreen
 import com.example.runrace_finalproject.ui.admin.AdminEventScreen
+import com.example.runrace_finalproject.ui.admin.EventParticipantsScreen
 import com.example.runrace_finalproject.ui.auth.LoginScreen
 import com.example.runrace_finalproject.ui.auth.SplashScreen
 import com.example.runrace_finalproject.ui.event.EventDetailScreen
@@ -19,14 +20,18 @@ import com.example.runrace_finalproject.ui.profile.ChangePasswordScreen
 import com.example.runrace_finalproject.ui.profile.EditProfileScreen
 import com.example.runrace_finalproject.ui.profile.ProfileScreen
 
+import androidx.compose.ui.Modifier
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        modifier = modifier
     ) {
         // Auth Screens
         composable(Screen.Splash.route) {
@@ -172,6 +177,9 @@ fun NavGraph(
                 onNavigateToAdd = { navController.navigate(Screen.AddEvent.route) },
                 onNavigateToEdit = { eventId ->
                     navController.navigate(Screen.EditEvent.createRoute(eventId))
+                },
+                onNavigateToParticipants = { eventId ->
+                    navController.navigate(Screen.EventParticipants.createRoute(eventId))
                 }
             )
         }
@@ -189,6 +197,17 @@ fun NavGraph(
         ) { backStackEntry ->
             val eventId = backStackEntry.arguments?.getInt("eventId") ?: return@composable
             AddEditEventScreen(
+                eventId = eventId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(
+            route = Screen.EventParticipants.route,
+            arguments = listOf(navArgument("eventId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getInt("eventId") ?: return@composable
+            EventParticipantsScreen(
                 eventId = eventId,
                 onNavigateBack = { navController.popBackStack() }
             )

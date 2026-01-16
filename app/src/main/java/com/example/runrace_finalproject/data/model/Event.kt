@@ -22,5 +22,8 @@ data class Event(
     val status: String, // "ongoing", "upcoming", "completed"
     
     @SerializedName("banner_url")
-    val bannerUrl: String? = null
+    val bannerUrl: String? = null,
+    
+    @SerializedName("registration_count")
+    val registrationCount: Int = 0
 )
