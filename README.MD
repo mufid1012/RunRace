@@ -6,12 +6,6 @@ Aplikasi Android untuk mencari dan mendaftar event lari/marathon.
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material3-green)
 ![PHP](https://img.shields.io/badge/Backend-PHP-purple)
 
-## 📱 Screenshots
-
-| Splash Screen | Home | Event Detail |
-|:---:|:---:|:---:|
-| Orange gradient dengan icon runner | Daftar event & berita | Detail event dengan tombol daftar |
-
 ## ✨ Fitur
 
 ### Untuk User
